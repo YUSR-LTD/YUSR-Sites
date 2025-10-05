@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUSR Sites - Website Builder</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.19.5/css/grapes.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: white;
+        }
+
+        .btn-danger {
+            background: rgba(255,82,82,0.2);
+            color: #ff5252;
+            border: 2px solid #ff5252;
+        }
+
+        .btn-danger:hover {
+            background: #ff5252;
+            color: white;
+        }
+
+        #gjs {
+            height: calc(100vh - 70px);
+            border: none;
+        }
+
+        /* Enhanced GrapesJS styling */
+        .gjs-one-bg {
+            background-color: #2d2d44;
+        }
+
+        .gjs-two-color {
+            color: #667eea;
+        }
+
+        .gjs-three-bg {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .gjs-four-color,
+        .gjs-four-color-h:hover {
+            color: #764ba2;
+        }
+
+        .gjs-block {
+            min-height: 80px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .gjs-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 90px;
+            right: 30px;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification.success {
+            border-left: 5px solid #4caf50;
+        }
+
+        .notification.error {
+            border-left: 5px solid #ff5252;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2d2d44;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">YUSR Sites ✨</div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="saveProject()" title="Save your project locally">
+                💾 Save
+            </button>
+            <button class="btn btn-secondary" onclick="loadProject()" title="Load a saved project">
+                📂 Load
+            </button>
+            <button class="btn btn-danger" onclick="clearCanvas()" title="Clear entire canvas">
+                🗑️ Clear
+            </button>
+            <button class="btn btn-primary" onclick="exportHTML()" title="Export as HTML file">
+                📥 Export HTML
+            </button>
+        </div>
+    </div>
+    
+    <div id="gjs"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.19.5/grapes.min.js"></script>
+    <script>
+        const editor = grapesjs.init({
+            container: '#gjs',
+            height: '100%',
+            width: 'auto',
+            fromElement: false,
+            storageManager: {
+                type: 'local',
+                autosave: true,
+                autoload: true,
+                stepsBeforeSave: 3
+            },
+            deviceManager: {
+                devices: [
+                    {
+                        name: 'Desktop',
+                        width: ''
+                    },
+                    {
+                        name: 'Tablet',
+                        width: '768px',
+                        widthMedia: '992px'
+                    },
+                    {
+                        name: 'Mobile',
+                        width: '320px',
+                        widthMedia: '480px'
+                    }
+                ]
+            },
+            blockManager: {
+                blocks: [
+                    {
+                        id: 'section',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📦</div><div style="font-size:12px;margin-top:5px">Section</div></div>',
+                        content: '<section style="padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;"><h2 style="font-size: 2.5em; margin-bottom: 20px;">New Section</h2><p style="font-size: 1.2em; opacity: 0.9;">Add your amazing content here</p></section>',
+                        category: 'Layout',
+                        attributes: { class: 'fa fa-square-o' }
+                    },
+                    {
+                        id: 'text',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📝</div><div style="font-size:12px;margin-top:5px">Text</div></div>',
+                        content: '<div style="padding: 15px; font-size: 16px; line-height: 1.6; color: #333;">Insert your text here. Double-click to edit.</div>',
+                        category: 'Basic'
+                    },
+                    {
+                        id: 'heading',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📌</div><div style="font-size:12px;margin-top:5px">Heading</div></div>',
+                        content: '<h1 style="padding: 20px 10px; font-size: 3em; font-weight: bold; color: #667eea;">Heading Text</h1>',
+                        category: 'Basic'
+                    },
+                    {
+                        id: 'subheading',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📍</div><div style="font-size:12px;margin-top:5px">Subheading</div></div>',
+                        content: '<h2 style="padding: 15px 10px; font-size: 2em; font-weight: 600; color: #555;">Subheading</h2>',
+                        category: 'Basic'
+                    },
+                    {
+                        id: 'image',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">🖼️</div><div style="font-size:12px;margin-top:5px">Image</div></div>',
+                        content: '<img src="https://via.placeholder.com/600x400/667eea/ffffff?text=Your+Image" style="max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">',
+                        category: 'Media'
+                    },
+                    {
+                        id: 'video',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">🎥</div><div style="font-size:12px;margin-top:5px">Video</div></div>',
+                        content: '<video controls style="max-width: 100%; border-radius: 10px;"><source src="" type="video/mp4">Your browser does not support videos.</video>',
+                        category: 'Media'
+                    },
+                    {
+                        id: 'button',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">🔘</div><div style="font-size:12px;margin-top:5px">Button</div></div>',
+                        content: '<a href="#" style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); transition: all 0.3s;">Click Me</a>',
+                        category: 'Basic'
+                    },
+                    {
+                        id: 'link',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">🔗</div><div style="font-size:12px;margin-top:5px">Link</div></div>',
+                        content: '<a href="#" style="color: #667eea; text-decoration: none; font-weight: 600; border-bottom: 2px solid #667eea; transition: all 0.3s;">Link Text</a>',
+                        category: 'Basic'
+                    },
+                    {
+                        id: 'form',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📋</div><div style="font-size:12px;margin-top:5px">Form</div></div>',
+                        content: '<form style="padding: 30px; background: #f9f9f9; border-radius: 10px; max-width: 500px;"><input type="text" placeholder="Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;"><input type="email" placeholder="Email" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;"><textarea placeholder="Message" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; min-height: 120px; resize: vertical;"></textarea><button type="submit" style="width: 100%; padding: 15px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">Submit</button></form>',
+                        category: 'Forms'
+                    },
+                    {
+                        id: 'input',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">✍️</div><div style="font-size:12px;margin-top:5px">Input</div></div>',
+                        content: '<input type="text" placeholder="Enter text..." style="padding: 12px 15px; border: 2px solid #ddd; border-radius: 8px; width: 100%; font-size: 16px; transition: all 0.3s;">',
+                        category: 'Forms'
+                    },
+                    {
+                        id: 'textarea',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📄</div><div style="font-size:12px;margin-top:5px">Textarea</div></div>',
+                        content: '<textarea placeholder="Enter text..." style="padding: 12px 15px; border: 2px solid #ddd; border-radius: 8px; width: 100%; min-height: 120px; font-size: 16px; resize: vertical;"></textarea>',
+                        category: 'Forms'
+                    },
+                    {
+                        id: 'container',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">📐</div><div style="font-size:12px;margin-top:5px">Container</div></div>',
+                        content: '<div style="padding: 40px; border: 3px dashed #ccc; min-height: 150px; border-radius: 10px; background: rgba(102, 126, 234, 0.05);"><p style="text-align: center; color: #999; font-size: 18px;">Drop elements here</p></div>',
+                        category: 'Layout'
+                    },
+                    {
+                        id: '2-columns',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">⚖️</div><div style="font-size:12px;margin-top:5px">2 Columns</div></div>',
+                        content: '<div style="display: flex; gap: 20px; flex-wrap: wrap;"><div style="flex: 1; min-width: 250px; padding: 30px; background: #f5f5f5; border-radius: 10px;"><h3>Column 1</h3><p>Add content here</p></div><div style="flex: 1; min-width: 250px; padding: 30px; background: #f5f5f5; border-radius: 10px;"><h3>Column 2</h3><p>Add content here</p></div></div>',
+                        category: 'Layout'
+                    },
+                    {
+                        id: '3-columns',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">⚖️</div><div style="font-size:12px;margin-top:5px">3 Columns</div></div>',
+                        content: '<div style="display: flex; gap: 20px; flex-wrap: wrap;"><div style="flex: 1; min-width: 200px; padding: 25px; background: #f5f5f5; border-radius: 10px;"><h4>Column 1</h4><p>Content</p></div><div style="flex: 1; min-width: 200px; padding: 25px; background: #f5f5f5; border-radius: 10px;"><h4>Column 2</h4><p>Content</p></div><div style="flex: 1; min-width: 200px; padding: 25px; background: #f5f5f5; border-radius: 10px;"><h4>Column 3</h4><p>Content</p></div></div>',
+                        category: 'Layout'
+                    },
+                    {
+                        id: 'divider',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">➖</div><div style="font-size:12px;margin-top:5px">Divider</div></div>',
+                        content: '<hr style="border: none; border-top: 3px solid #667eea; margin: 40px 0; opacity: 0.3;">',
+                        category: 'Basic'
+                    },
+                    {
+                        id: 'spacer',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">⬜</div><div style="font-size:12px;margin-top:5px">Spacer</div></div>',
+                        content: '<div style="height: 50px;"></div>',
+                        category: 'Layout'
+                    },
+                    {
+                        id: 'card',
+                        label: '<div style="text-align:center;padding:10px"><div style="font-size:35px">🎴</div><div style="font-size:12px;margin-top:5px">Card</div></div>',
+                        content: '<div style="background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); padding: 30px; max-width: 400px;"><h3 style="color: #667eea; margin-bottom: 15px;">Card Title</h3><p style="color: #666; line-height: 1.6; margin-bottom: 20px;">This is a card component. Add your content here to create beautiful card layouts.</p><a href="#" style="display: inline-block; padding: 10px 25px; background: #667eea; color: white; text-decoration: none; border-radius: 25px; font-weight: 600;">Learn More</a></div>',
+                        category: 'Layout'
+                    }
+                ]
+            },
+            styleManager: {
+                sectors: [{
+                    name: 'General',
+                    open: true,
+                    properties: [
+                        {
+                            type: 'select',
+                            property: 'display',
+                            default: 'block',
+                            options: [
+                                { value: 'block', name: 'Block' },
+                                { value: 'inline-block', name: 'Inline Block' },
+                                { value: 'flex', name: 'Flex' },
+                                { value: 'inline', name: 'Inline' },
+                                { value: 'none', name: 'None' }
+                            ]
+                        },
+                        'width',
+                        'height',
+                        'max-width',
+                        'min-height',
+                        'margin',
+                        'padding'
+                    ]
+                }, {
+                    name: 'Typography',
+                    open: false,
+                    properties: [
+                        'font-family',
+                        'font-size',
+                        'font-weight',
+                        'letter-spacing',
+                        'color',
+                        'line-height',
+                        {
+                            type: 'select',
+                            property: 'text-align',
+                            options: [
+                                { value: 'left', name: 'Left' },
+                                { value: 'center', name: 'Center' },
+                                { value: 'right', name: 'Right' },
+                                { value: 'justify', name: 'Justify' }
+                            ]
+                        },
+                        {
+                            type: 'select',
+                            property: 'text-decoration',
+                            options: [
+                                { value: 'none', name: 'None' },
+                                { value: 'underline', name: 'Underline' },
+                                { value: 'line-through', name: 'Line-through' }
+                            ]
+                        },
+                        'text-shadow'
+                    ]
+                }, {
+                    name: 'Decorations',
+                    open: false,
+                    properties: [
+                        'background-color',
+                        'background',
+                        'border-radius',
+                        'border',
+                        'box-shadow'
+                    ]
+                }, {
+                    name: 'Flexbox',
+                    open: false,
+                    properties: [
+                        'flex-direction',
+                        'justify-content',
+                        'align-items',
+                        'flex-wrap',
+                        'gap'
+                    ]
+                }, {
+                    name: 'Extra',
+                    open: false,
+                    properties: [
+                        'opacity',
+                        'cursor',
+                        'overflow',
+                        'transition',
+                        'transform'
+                    ]
+                }]
+            }
+        });
+
+        // Commands
+        editor.Commands.add('show-layers', {
+            getRowEl(editor) { return editor.getContainer().closest('.editor-row'); },
+            getLayersEl(row) { return row.querySelector('.layers-container') },
+
+            run(editor, sender) {
+                const lmEl = this.getLayersEl(this.getRowEl(editor));
+                lmEl.style.display = '';
+            },
+            stop(editor, sender) {
+                const lmEl = this.getLayersEl(this.getRowEl(editor));
+                lmEl.style.display = 'none';
+            },
+        });
+
+        editor.Commands.add('show-styles', {
+            getRowEl(editor) { return editor.getContainer().closest('.editor-row'); },
+            getStyleEl(row) { return row.querySelector('.styles-container') },
+
+            run(editor, sender) {
+                const smEl = this.getStyleEl(this.getRowEl(editor));
+                smEl.style.display = '';
+            },
+            stop(editor, sender) {
+                const smEl = this.getStyleEl(this.getRowEl(editor));
+                smEl.style.display = 'none';
+            },
+        });
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="font-size: 24px;">${type === 'success' ? '✅' : '❌'}</div>
+                <div style="font-weight: 600; color: #333;">${message}</div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function exportHTML() {
+            try {
+                const html = editor.getHtml();
+                const css = editor.getCss();
+                
+                const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Website created with YUSR Sites">
+    <title>My YUSR Site</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        ${css}
+    </style>
+</head>
+<body>
+    ${html}
+</body>
+</html>`;
+
+                const blob = new Blob([fullHTML], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'yusr-site-' + Date.now() + '.html';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showNotification('HTML exported successfully! Upload to your hosting.', 'success');
+            } catch (error) {
+                showNotification('Export failed. Please try again.', 'error');
+            }
+        }
+
+        function clearCanvas() {
+            if (confirm('⚠️ Are you sure you want to clear everything? This cannot be undone.')) {
+                editor.DomComponents.clear();
+                editor.CssComposer.clear();
+                showNotification('Canvas cleared successfully.', 'success');
+            }
+        }
+
+        function saveProject() {
+            try {
+                const data = {
+                    html: editor.getHtml(),
+                    css: editor.getCss(),
+                    components: editor.getComponents(),
+                    styles: editor.getStyle()
+                };
+                
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'yusr-project-' + Date.now() + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showNotification('Project saved successfully!', 'success');
+            } catch (error) {
+                showNotification('Save failed. Please try again.', 'error');
+            }
+        }
+
+        function loadProject() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        editor.setComponents(data.html);
+                        editor.setStyle(data.css);
+                        showNotification('Project loaded successfully!', 'success');
+                    } catch (error) {
+                        showNotification('Invalid project file.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveProject();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportHTML();
+            }
+        });
+
+        // Welcome message
+        setTimeout(() => {
+            showNotification('Welcome to YUSR Sites! Drag elements from the left to start building.', 'success');
+        }, 500);
+    </script>
+</body>
+</html>
